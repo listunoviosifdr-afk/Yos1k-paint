@@ -3,12 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Мой канал - Yos1k Paint</title>
+    <title>yos1k paint 1.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* Анимации интерфейса */
         @keyframes zoomIn {
-            from { opacity: 0; transform: scale(0.9); filter: blur(10px); }
-            to { opacity: 1; transform: scale(1); filter: blur(0); }
+            from { opacity: 0; transform: scale(0.9) translateY(40px); filter: blur(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         @keyframes starsMove {
@@ -22,16 +28,13 @@
             100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
         }
 
-        @keyframes nebulaFloat {
-            0% { transform: translate(0, 0) scale(1); opacity: 0.3; }
-            50% { transform: translate(2%, 2%) scale(1.1); opacity: 0.5; }
-            100% { transform: translate(0, 0) scale(1); opacity: 0.3; }
+        @keyframes avatarGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(250, 204, 21, 0.3); border-color: rgba(250, 204, 21, 0.5); }
+            50% { box-shadow: 0 0 40px rgba(250, 204, 21, 0.6); border-color: rgba(250, 204, 21, 0.9); }
         }
 
-        @keyframes textGradient {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        * { 
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1); 
         }
 
         body {
@@ -48,42 +51,66 @@
             animation: starsMove 60s linear infinite;
         }
 
-        .nebula {
+        /* КУРСОР КИСТИ */
+        #brushCursor {
             position: fixed;
-            inset: -10%;
-            background: radial-gradient(circle at 30% 40%, rgba(124, 58, 237, 0.1), transparent 40%),
-                        radial-gradient(circle at 70% 60%, rgba(219, 39, 119, 0.1), transparent 40%);
-            z-index: -1;
-            filter: blur(80px);
-            animation: nebulaFloat 20s ease-in-out infinite;
+            pointer-events: none;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            mix-blend-mode: difference;
+            z-index: 9999;
+            display: none;
+            transform: translate(-50%, -50%);
+            transition: none;
         }
 
         .canvas-container {
             position: relative;
             background-color: #ffffff;
             background-image: 
-                repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), 
-                repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0);
-            background-position: 0 0, 10px 10px;
+                linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
+                linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
+                linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
             background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            
             border-radius: 16px;
-            overflow: hidden;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
             border: 4px solid rgba(255, 255, 255, 0.1);
+            animation: zoomIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: none;
+            overflow: hidden; 
         }
 
-        canvas {
-            cursor: crosshair;
-            display: block;
-            image-rendering: auto;
+        canvas { image-rendering: auto; border-radius: 12px; }
+
+        #paintCanvas {
+            position: relative;
+            z-index: 10;
+            background: transparent;
         }
 
-        #selectionCanvas {
+        #floatingPreview {
             position: absolute;
-            top: 0;
-            left: 0;
+            pointer-events: none; 
+            z-index: 45;
+            display: none;
+            opacity: 0.9;
+            border: 2px dashed #facc15;
+            transform: translate(-50%, -50%);
+            transition: none;
+            will-change: left, top;
+        }
+
+        #selectionBox {
+            position: absolute;
+            border: 2px dashed #facc15;
+            background: rgba(250, 204, 21, 0.2);
+            display: none;
             pointer-events: none;
-            z-index: 5;
+            z-index: 40;
+            transition: none;
         }
 
         #welcomeScreen {
@@ -94,187 +121,452 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: opacity 0.5s ease;
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.6s;
         }
 
-        .welcome-card {
-            animation: zoomIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        #welcomeScreen.app-hidden {
+            opacity: 0;
+            visibility: hidden;
+            transform: scale(1.1);
+            pointer-events: none;
+        }
+
+        .corner-avatar {
+            position: fixed;
+            top: 24px;
+            left: 24px;
+            width: 80px;
+            height: 80px;
+            border-radius: 9999px;
+            border: 3px solid #facc15;
+            animation: avatarGlow 3s ease-in-out infinite;
+            z-index: 110;
+            transition: transform 0.3s;
+        }
+        
+        .corner-avatar:hover {
+            transform: scale(1.1) rotate(5deg);
         }
 
         .tool-btn {
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
-            color: #94a3b8;
+            display: flex; align-items: center; justify-content: center;
+            width: 44px; height: 44px; border-radius: 12px;
+            color: #ffffff; cursor: pointer;
+            position: relative;
+            background: transparent;
         }
         
-        .tool-btn:hover:not(:disabled) {
-            background: rgba(255, 255, 255, 0.15);
+        .tool-btn:not(:disabled):hover {
             color: white;
+            background: rgba(255, 255, 255, 0.1);
             transform: translateY(-2px);
+        }
+
+        .tool-btn:active {
+            transform: scale(0.9);
         }
 
         .tool-btn.active {
             background: linear-gradient(135deg, #ef4444 0%, #facc15 100%);
-            color: white;
+            color: white; 
+            transform: scale(1.1);
             animation: pulseBorder 2s infinite;
         }
 
-        .gradient-text {
-            background: linear-gradient(to right, #ef4444, #facc15, #ef4444);
-            background-size: 200% auto;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: textGradient 3s linear infinite;
-        }
-
         .glass-panel {
-            background: rgba(15, 23, 42, 0.9);
+            background: rgba(15, 23, 42, 0.95);
             backdrop-filter: blur(32px);
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            animation: fadeInUp 0.6s ease-out;
         }
 
-        .app-hidden { display: none !important; }
+        .setting-label {
+            font-size: 11px;
+            font-weight: 900;
+            color: #ffffff;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+            letter-spacing: 0.08em;
+            display: block; 
+            width: 100%;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
 
-        .objects-library {
+        select, input[type="text"], input[type="number"] {
+            background: #0f172a !important; 
+            color: #ffffff !important; 
+            border: 2px solid rgba(250, 204, 21, 0.4) !important;
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 14px;      
+            font-weight: 900;
+            outline: none;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+            appearance: none;
+        }
+
+        select option {
+            background: #0f172a;
+            color: #ffffff !important;
+        }
+
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            opacity: 1;
+            filter: invert(1);
+        }
+
+        #brushSizeInput {
+            width: 80px;
+            text-align: center;
+        }
+
+        #visualizer { height: 32px; width: 60px; display: flex; align-items: center; gap: 2px; }
+        .vis-bar { flex: 1; height: 4px; background: #facc15; border-radius: 4px; transition: height 0.05s ease-out; }
+
+        #objectTable {
             position: absolute;
-            left: 24px;
-            top: 100px;
-            background: rgba(15, 23, 42, 0.9);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 12px;
-            z-index: 20;
-            width: 140px;
+            top: 20px;
+            left: 20px;
+            z-index: 60;
+            background: rgba(15, 23, 42, 0.98);
+            backdrop-filter: blur(24px);
+            border: 2px solid #facc15;
+            border-radius: 24px;
+            padding: 16px;
+            width: 220px; 
+            max-height: 85vh;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.9);
+            display: flex;
+            flex-direction: column;
+            animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s backwards;
+            overflow: visible; 
+        }
+        
+        .lib-header-text {
+            font-size: 12px;
+            font-weight: 900;
+            color: #ffffff;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            text-align: center;
+            width: 100%;
+            margin-bottom: 14px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid rgba(250, 204, 21, 0.5);
+            display: block;
+            word-wrap: break-word;
+            line-height: 1.4;
         }
 
-        .object-grid {
+        .lib-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
-            max-height: 400px;
+            gap: 12px;
+            margin-top: 4px;
+            max-height: calc(100vh - 350px);
             overflow-y: auto;
+            padding: 4px;
+            scrollbar-width: thin;
+            scrollbar-color: #facc15 transparent;
         }
 
-        .object-item {
-            width: 50px;
-            height: 50px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
+        .lib-item-mini {
+            aspect-ratio: 1;
+            background: white;
+            border-radius: 14px;
             cursor: pointer;
+            overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.2s;
-            border: 2px solid transparent;
+            border: 2px solid rgba(255,255,255,0.1);
+            transition: all 0.3s ease;
+            position: relative;
         }
 
-        .object-item.selected {
-            border-color: #facc15;
-            background: rgba(250, 204, 21, 0.1);
+        .lib-item-mini img {
+            max-width: 85%;
+            max-height: 85%;
+            object-fit: contain;
         }
+
+        .delete-btn {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: #ef4444;
+            color: white;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom-left-radius: 8px;
+            opacity: 0;
+            z-index: 10;
+        }
+
+        .lib-item-mini:hover { transform: scale(1.05); border-color: #facc15; }
+        .lib-item-mini:hover .delete-btn { opacity: 1; }
+
+        input[type="range"] { 
+            -webkit-appearance: none; 
+            cursor: pointer; 
+            background: rgba(255,255,255,0.2); 
+            border-radius: 8px; 
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px; width: 16px;
+            border-radius: 50%;
+            background: #facc15;
+            border: 2px solid #ef4444;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+        }
+
+        #pasteModal {
+            position: fixed; inset: 0; z-index: 200;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(12px);
+            display: none; align-items: center; justify-content: center;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        
+        #pasteModal.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .paste-card {
+            background: #1e293b; border: 2px solid #facc15;
+            padding: 32px; border-radius: 24px; text-align: center;
+            max-width: 320px; width: 90%;
+            transform: scale(0.8) translateY(20px);
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        #pasteModal.show .paste-card {
+            transform: scale(1) translateY(0);
+        }
+
+        .action-button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 12px 0;
+            border-radius: 16px;
+            font-size: 11px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            transition: all 0.2s ease;
+            width: 100%;
+            margin-top: 8px;
+        }
+        .action-button:hover { background: rgba(255, 255, 255, 0.2); transform: translateY(-2px); }
+
+        .history-btn:disabled { opacity: 0.2; cursor: not-allowed; filter: grayscale(1); }
+
+        #audioSettingsMenu {
+            position: absolute;
+            top: calc(100% + 12px);
+            right: 0;
+            background: rgba(15, 23, 42, 0.98);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(250, 204, 21, 0.3);
+            border-radius: 16px;
+            padding: 16px;
+            width: 220px;
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            z-index: 100;
+        }
+
+        #audioSettingsMenu.show {
+            display: flex;
+            animation: fadeInUp 0.3s ease-out;
+        }
+
     </style>
 </head>
 <body class="flex flex-col h-screen w-screen overflow-hidden">
 
-    <div class="nebula"></div>
+    <!-- КУРСОР КИСТИ -->
+    <div id="brushCursor"></div>
 
-    <!-- ЭКРАН ПРИВЕТСТВИЯ -->
+    <!-- Модальное окно вставки -->
+    <div id="pasteModal">
+        <div class="paste-card shadow-2xl">
+            <div class="w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+            </div>
+            <h3 class="text-white text-xl font-bold mb-2">Найдено изображение</h3>
+            <p class="text-slate-400 text-sm mb-6">Выберите режим вставки</p>
+            <div class="flex flex-col gap-3">
+                <button id="pasteAsObject" class="bg-yellow-500 text-black font-black py-3 rounded-xl hover:brightness-110">Как объект</button>
+                <button id="pasteAsBackground" class="bg-slate-700 text-white font-bold py-3 rounded-xl hover:brightness-110">Как фон</button>
+                <button id="cancelPaste" class="text-slate-500 text-sm mt-2 hover:text-white transition-colors">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Начальный экран -->
     <div id="welcomeScreen">
-        <div class="welcome-card p-12 rounded-[3rem] text-center max-w-lg mx-4 border border-white/10 bg-black/40 backdrop-blur-3xl shadow-2xl">
-             <h1 class="text-7xl font-black mb-12 gradient-text">Yos1k paint</h1>
+        <img id="welcomeAvatar" src="https://yt3.googleusercontent.com/E51f-Ku1QqArwy4dqPzwugfJRSQYK2cCEmSS1QFSJm9epWo3qIP7iRcHkjQJLPfhIoliAzHroA=s900-c-k-c0x00ffffff-no-rj" alt="Yos1k" class="corner-avatar">
+        <div class="p-12 rounded-[3.5rem] text-center max-w-lg mx-4 border border-white/10 bg-black/40 backdrop-blur-3xl shadow-2xl">
+             <h1 class="text-7xl font-black mb-4 text-white" style="background: linear-gradient(to right, #ef4444, #facc15); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Yos1k paint</h1>
+             
+             <a href="https://www.youtube.com/@yos1kGD" target="_blank" class="flex items-center justify-center gap-3 mb-12 hover:scale-110 active:scale-95 transition-transform group">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="#FF0000">
+                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                </svg>
+                <span class="text-white text-2xl font-black tracking-wider group-hover:text-yellow-400 transition-colors">Yos1kGD</span>
+             </a>
 
-             <button id="quickEnterBtn" class="w-full bg-gradient-to-r from-red-600 to-yellow-500 hover:from-red-500 hover:to-yellow-400 text-white text-xl font-black py-6 rounded-2xl transition-all active:scale-95 uppercase tracking-widest shadow-lg">
+             <button id="quickEnterBtn" class="w-full bg-gradient-to-r from-red-600 to-yellow-500 text-white text-xl font-black py-6 rounded-2xl uppercase tracking-widest shadow-lg hover:shadow-yellow-500/20 active:scale-95 transition-all">
                 Открыть холст
              </button>
-
-             <a href="https://www.youtube.com/@Yos1kGD" target="_blank" class="block mt-8 text-white/60 hover:text-white transition-colors text-sm font-medium flex items-center justify-center gap-2">
-                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-                 Мой YouTube канал
-             </a>
         </div>
     </div>
 
-    <!-- ОСНОВНОЕ ПРИЛОЖЕНИЕ -->
-    <div id="mainApp" class="flex flex-col h-full w-full app-hidden">
-        <div class="glass-panel px-6 py-3 flex items-center justify-between z-10 flex-wrap gap-4 shadow-xl">
+    <!-- Основное приложение -->
+    <div id="mainApp" class="flex flex-col h-full w-full opacity-0 pointer-events-none scale-95 transition-all duration-700">
+        <div class="glass-panel px-6 py-3 flex items-center z-50 flex-wrap gap-4 shadow-xl">
             <div class="flex items-center gap-4">
-                <input type="color" id="colorPicker" value="#ef4444" class="w-10 h-10 cursor-pointer rounded-xl border-0 bg-transparent transition-transform hover:scale-110">
+                <input type="color" id="colorPicker" value="#ef4444" class="w-12 h-12 cursor-pointer rounded-xl bg-transparent border-0 hover:scale-110 transition-transform">
                 
-                <div class="flex flex-col w-24">
-                    <input type="range" id="brushSize" min="1" max="150" value="20" class="h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-red-500">
-                    <span id="brushSizeDisplay" class="text-[10px] font-bold text-slate-400 uppercase mt-2 text-center">Размер: 20px</span>
+                <div class="flex flex-col w-44">
+                    <span class="setting-label text-center">Размер</span>
+                    <input type="range" id="brushSize" min="1" max="1000" value="50" class="h-2 bg-slate-700 rounded-lg accent-yellow-400 mb-2">
+                    <div class="flex items-center justify-center gap-2">
+                        <input type="number" id="brushSizeInput" value="50" min="1" max="1000">
+                        <span class="text-white font-black text-xs uppercase" style="text-shadow: 0 2px 4px black">px</span>
+                    </div>
                 </div>
 
-                <div class="flex bg-white/5 p-1 rounded-2xl gap-1 border border-white/10">
-                    <button id="undoBtn" class="tool-btn" title="Отменить" disabled>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+                <div id="modePanel" class="flex flex-col items-center">
+                    <span class="setting-label text-center">Режим</span>
+                    <select id="brushMode" class="h-10">
+                        <option value="normal" selected>Обычная</option>
+                        <option value="pixel">Пиксели</option>
+                        <option value="glow">Неон</option>
+                        <option value="rainbow">Радуга</option>
+                    </select>
+                </div>
+
+                <div id="textToolSettings" class="flex items-center gap-4 hidden">
+                    <div class="flex flex-col">
+                        <span class="setting-label text-center">Шрифт</span>
+                        <select id="fontPicker" class="h-10">
+                            <option value="Arial">Arial</option>
+                            <option value="Times New Roman">Times</option>
+                            <option value="Courier New">Courier</option>
+                            <option value="Impact">Impact</option>
+                            <option value="Verdana">Verdana</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="setting-label text-center">Текст</span>
+                        <input type="text" id="textInput" placeholder="Привет!" class="w-32 h-10">
+                    </div>
+                </div>
+
+                <div class="flex bg-white/5 p-1 rounded-2xl gap-1 border border-white/10 shadow-inner">
+                    <button id="undoBtn" class="tool-btn history-btn" title="Назад" disabled>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
                     </button>
-                    <button id="redoBtn" class="tool-btn" title="Вернуть" disabled>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg>
+                    <button id="redoBtn" class="tool-btn history-btn" title="Вперед" disabled>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg>
                     </button>
                 </div>
 
-                <div class="flex bg-white/5 p-1 rounded-2xl gap-1 border border-white/10">
-                    <button id="brushBtn" class="tool-btn active" title="Кисть"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m12 19 7-7 3 3-7 7-3-3z"/><path d="m18 13-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg></button>
-                    <button id="textBtn" class="tool-btn" title="Текст"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg></button>
-                    <button id="eraserBtn" class="tool-btn" title="Ластик"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/></svg></button>
-                    <button id="bucketBtn" class="tool-btn" title="Заливка"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m19 11-8-8-8.6 8.6a2 2 0 0 0 0 2.8l5.2 5.2c.8.8 2 .8 2.8 0L19 11Z"/><path d="M2 13h15"/></svg></button>
-                    <button id="scissorsBtn" class="tool-btn" title="Вырезать и Переместить"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 3h7v7H3z"/><path d="M14 3h7v7h-7z"/><path d="M14 14h7v7h-7z"/><path d="M3 14h7v7H3z"/><path d="m8 8 8 8"/></svg></button>
+                <div class="flex bg-white/5 p-1 rounded-2xl gap-1 border border-white/10 shadow-inner">
+                    <button id="brushBtn" class="tool-btn active" title="Кисть"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m12 19 7-7 3 3-7 7-3-3z"/><path d="m18 13-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg></button>
+                    <button id="textBtn" class="tool-btn" title="Текст"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg></button>
+                    <button id="waveBtn" class="tool-btn" title="Волна">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <path d="M2 6c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/>
+                            <path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/>
+                            <path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/>
+                        </svg>
+                    </button>
+                    <button id="scissorsBtn" class="tool-btn" title="Вырезать"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg></button>
+                    <button id="bucketBtn" class="tool-btn" title="Заливка"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m19 11-8-8-8.6 8.6a2 2 0 0 0 0 2.8l5.2 5.2c.8.8 2 .8 2.8 0L19 11Z"/><path d="M2 13h15"/></svg></button>
+                    <button id="eraserBtn" class="tool-btn" title="Ластик"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/></svg></button>
                 </div>
 
-                <div id="textInputWrapper" class="hidden">
-                    <input type="text" id="brushTextInput" value="Yos1k" class="w-24 bg-white/5 border border-white/10 text-white rounded px-2 text-xs h-10">
-                </div>
+                <div class="relative flex items-center gap-2 bg-white/5 p-2 rounded-2xl border border-white/10 shadow-inner">
+                    <button id="musicToggle" class="text-white hover:text-yellow-400 transition-colors">
+                        <svg id="playIcon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                    </button>
+                    <div id="visualizer">
+                        <div class="vis-bar"></div><div class="vis-bar"></div><div class="vis-bar"></div><div class="vis-bar"></div><div class="vis-bar"></div><div class="vis-bar"></div>
+                    </div>
+                    <button id="loadMusicBtn" class="tool-btn !w-auto px-4 h-10 gap-2 bg-white/10 hover:bg-white/20 border border-white/10">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2.5"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                        <span class="text-[10px] font-black text-white">MP3</span>
+                    </button>
+                    <button id="audioSettingsBtn" class="tool-btn !w-10 !h-10 text-white hover:text-yellow-400" title="Настройки звука">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    </button>
 
-                <div class="flex items-center gap-3 bg-white/5 p-2 rounded-2xl border border-white/10">
-                    <label class="cursor-pointer bg-white/10 hover:bg-white/20 p-2 rounded-lg" title="Музыка">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-                        <input type="file" id="musicUpload" accept="audio/*" class="hidden">
-                    </label>
-                    <button id="musicToggle" class="text-white"><svg id="playIcon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
-                    <input type="range" id="musicVolume" min="0" max="1" step="0.01" value="0.5" class="h-1 w-16 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-yellow-500">
+                    <div id="audioSettingsMenu">
+                        <div class="flex flex-col">
+                            <span class="setting-label text-center">Громкость</span>
+                            <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.5" class="w-full">
+                        </div>
+                        <div class="flex flex-col">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="setting-label !w-auto">Скорость</span>
+                                <span id="speedValue" class="text-[11px] text-yellow-500 font-bold">1.0x</span>
+                            </div>
+                            <input type="range" id="speedSlider" min="0.5" max="2" step="0.1" value="1.0" class="w-full">
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="setting-label text-center">Перемотка</span>
+                            <input type="range" id="offsetSlider" min="0" max="100" step="1" value="0" class="w-full">
+                        </div>
+                    </div>
                 </div>
-            </div>
-
-            <div class="flex gap-3">
-                <button id="clearBtn" class="bg-slate-800 hover:bg-red-600 text-slate-400 px-4 py-2 rounded-xl text-[10px] font-black transition-all border border-slate-700 uppercase">Очистить</button>
-                <button id="saveBtn" class="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl text-[10px] font-black transition-all border border-white/10 uppercase">Сохранить</button>
             </div>
         </div>
 
-        <div class="objects-library">
-            <div class="flex items-center justify-between mb-2">
-                <span class="text-[10px] text-white/30 uppercase font-bold tracking-wider">Объекты</span>
-                <label class="cursor-pointer bg-white/10 hover:bg-white/20 px-2 py-1 rounded-md text-[10px] text-white font-bold transition-colors">
-                    +
-                    <input type="file" id="objectUpload" accept="image/*" class="hidden">
-                </label>
-            </div>
-            
-            <div id="objectsContainer" class="object-grid">
-                <div class="object-item" data-type="emoji" data-value="🔥"><span class="text-xl">🔥</span></div>
-                <div class="object-item" data-type="emoji" data-value="⭐"><span class="text-xl">⭐</span></div>
-                <div class="object-item" data-type="emoji" data-value="💀"><span class="text-xl">💀</span></div>
-                <div class="object-item" data-type="emoji" data-value="👑"><span class="text-xl">👑</span></div>
-                <div class="object-item" data-type="emoji" data-value="👾"><span class="text-xl">👾</span></div>
-                <div class="object-item" data-type="emoji" data-value="❤️"><span class="text-xl">❤️</span></div>
-            </div>
-        </div>
+        <div id="canvasWrapper" class="relative flex-grow flex items-center justify-center p-4 overflow-hidden bg-slate-950">
+            <!-- ПАНЕЛЬ ОБЪЕКТОВ -->
+            <div id="objectTable">
+                <span class="lib-header-text">Библиотека</span>
+                <div class="lib-grid" id="libGrid">
+                    <div class="lib-item-mini shadow-lg" onclick="insertObject('https://yt3.googleusercontent.com/E51f-Ku1QqArwy4dqPzwugfJRSQYK2cCEmSS1QFSJm9epWo3qIP7iRcHkjQJLPfhIoliAzHroA=s900-c-k-c0x00ffffff-no-rj')">
+                        <img src="https://yt3.googleusercontent.com/E51f-Ku1QqArwy4dqPzwugfJRSQYK2cCEmSS1QFSJm9epWo3qIP7iRcHkjQJLPfhIoliAzHroA=s900-c-k-c0x00ffffff-no-rj">
+                    </div>
+                    <div id="uploadObjectBtn" class="lib-item-mini border-dashed border-yellow-500/50 bg-yellow-500/10 text-yellow-500 shadow-lg group hover:bg-yellow-500/20">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    </div>
+                </div>
 
-        <div id="canvasWrapper" class="relative flex-grow flex items-center justify-center p-6">
-            <div class="canvas-container">
+                <div class="mt-4 flex flex-col gap-1">
+                    <button id="clearBtn" class="action-button bg-red-500/20 hover:bg-red-500/40 !text-red-400 border-red-500/30">Очистить</button>
+                    <button id="saveBtn" class="action-button bg-yellow-500/20 hover:bg-yellow-500/40 !text-yellow-400 border-yellow-500/30">Сохранить</button>
+                </div>
+            </div>
+
+            <div class="canvas-container" id="container">
                 <canvas id="paintCanvas"></canvas>
-                <canvas id="selectionCanvas"></canvas>
+                <div id="selectionBox"></div>
+                <canvas id="floatingPreview"></canvas>
             </div>
         </div>
     </div>
 
+    <input type="file" id="objectFile" accept="image/*" class="hidden">
+    <input type="file" id="musicInput" accept="audio/*" class="hidden">
     <audio id="audioElement" loop crossorigin="anonymous"></audio>
 
     <script>
@@ -283,433 +575,555 @@
             enterBtn: document.getElementById('quickEnterBtn'),
             main: document.getElementById('mainApp'),
             canvas: document.getElementById('paintCanvas'),
-            selectionCanvas: document.getElementById('selectionCanvas'),
+            container: document.getElementById('container'),
             wrapper: document.getElementById('canvasWrapper'),
             color: document.getElementById('colorPicker'),
             size: document.getElementById('brushSize'),
-            sizeDisplay: document.getElementById('brushSizeDisplay'),
-            textInputWrap: document.getElementById('textInputWrapper'),
-            textInput: document.getElementById('brushTextInput'),
+            sizeInput: document.getElementById('brushSizeInput'),
+            brushMode: document.getElementById('brushMode'),
+            modePanel: document.getElementById('modePanel'),
+            textToolSettings: document.getElementById('textToolSettings'),
+            textInput: document.getElementById('textInput'),
+            fontPicker: document.getElementById('fontPicker'),
             clear: document.getElementById('clearBtn'),
             save: document.getElementById('saveBtn'),
             undo: document.getElementById('undoBtn'),
             redo: document.getElementById('redoBtn'),
             audio: document.getElementById('audioElement'),
-            musicUpload: document.getElementById('musicUpload'),
             musicToggle: document.getElementById('musicToggle'),
-            musicVol: document.getElementById('musicVolume'),
+            loadMusicBtn: document.getElementById('loadMusicBtn'),
+            audioSettingsBtn: document.getElementById('audioSettingsBtn'),
+            audioSettingsMenu: document.getElementById('audioSettingsMenu'),
+            speedSlider: document.getElementById('speedSlider'),
+            speedValue: document.getElementById('speedValue'),
+            offsetSlider: document.getElementById('offsetSlider'),
             playIcon: document.getElementById('playIcon'),
-            objectUpload: document.getElementById('objectUpload'),
-            objectsContainer: document.getElementById('objectsContainer'),
-            scissorsBtn: document.getElementById('scissorsBtn')
+            selectionBox: document.getElementById('selectionBox'),
+            floatingPreview: document.getElementById('floatingPreview'),
+            visBars: document.querySelectorAll('.vis-bar'),
+            objectFile: document.getElementById('objectFile'),
+            musicInput: document.getElementById('musicInput'),
+            uploadObjectBtn: document.getElementById('uploadObjectBtn'),
+            volume: document.getElementById('volumeSlider'),
+            libGrid: document.getElementById('libGrid'),
+            pasteModal: document.getElementById('pasteModal'),
+            pasteAsObject: document.getElementById('pasteAsObject'),
+            pasteAsBackground: document.getElementById('pasteAsBackground'),
+            cancelPaste: document.getElementById('cancelPaste'),
+            brushCursor: document.getElementById('brushCursor')
         };
 
         const ctx = elements.canvas.getContext('2d', { willReadFrequently: true });
-        const sCtx = elements.selectionCanvas.getContext('2d');
+        const floatCtx = elements.floatingPreview.getContext('2d');
+
+        const glowCanvas = document.createElement('canvas');
+        const gctx = glowCanvas.getContext('2d');
         
-        let isDrawing = false;
-        let currentTool = 'brush';
-        let selectedObject = null;
-        let history = [];
-        let historyIdx = -1;
-        const maxHistory = 30;
+        let audioCtx, analyzer, dataArray, sourceNode;
 
-        // Переменные для выделения и перемещения
-        let selectionRect = null;
-        let movingImageData = null;
-        let isMoving = false;
-        let dragOffset = { x: 0, y: 0 };
-
-        // Вход в приложение
-        elements.enterBtn.onclick = () => {
-            elements.welcome.style.opacity = '0';
-            setTimeout(() => {
-                elements.welcome.classList.add('app-hidden');
-                elements.main.classList.remove('app-hidden');
-                initCanvas();
-            }, 500);
-        };
-
-        function initCanvas() {
-            const w = Math.min(elements.wrapper.clientWidth - 48, 1400);
-            const h = Math.min(elements.wrapper.clientHeight - 48, 900);
-            
-            elements.canvas.width = w;
-            elements.canvas.height = h;
-            elements.selectionCanvas.width = w;
-            elements.selectionCanvas.height = h;
-
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            
-            const saved = localStorage.getItem('yos1k_paint_local');
-            if (saved) {
-                const img = new Image();
-                img.onload = () => {
-                    ctx.drawImage(img, 0, 0);
-                    saveToHistory();
-                };
-                img.src = saved;
-            } else {
-                saveToHistory();
-            }
+        function initAudio() {
+            if (audioCtx) return;
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            analyzer = audioCtx.createAnalyser();
+            analyzer.fftSize = 64; 
+            sourceNode = audioCtx.createMediaElementSource(elements.audio);
+            sourceNode.connect(analyzer);
+            analyzer.connect(audioCtx.destination);
+            dataArray = new Uint8Array(analyzer.frequencyBinCount);
         }
 
-        // --- ЛОГИКА РИСОВАНИЯ ---
+        function updateGlowTexture(color, size) {
+            const diam = size * 3; 
+            glowCanvas.width = Math.max(1, diam);
+            glowCanvas.height = Math.max(1, diam);
+            const center = diam / 2;
+            const grad = gctx.createRadialGradient(center, center, 0, center, center, center);
+            
+            let r=255, g=255, b=255;
+            if (color.startsWith('#')) {
+                r = parseInt(color.slice(1, 3), 16);
+                g = parseInt(color.slice(3, 5), 16);
+                b = parseInt(color.slice(5, 7), 16);
+            }
 
-        function saveToHistory() {
-            const data = elements.canvas.toDataURL();
+            grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.35)`);
+            grad.addColorStop(0.3, `rgba(${r}, ${g}, ${b}, 0.2)`);
+            grad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
+
+            gctx.clearRect(0,0, diam, diam);
+            gctx.fillStyle = grad;
+            gctx.fillRect(0,0, diam, diam);
+        }
+
+        let isDrawing = false, currentTool = 'brush', lastPos = { x: 0, y: 0 }, hue = 0, history = [], historyIdx = -1;
+        let mouse = { x: 0, y: 0, targetX: 0, targetY: 0 }, objectPos = { x: 0, y: 0 };
+        let customLibrary = JSON.parse(localStorage.getItem('yos1k_paint_lib') || '[]');
+        let activeLibraryImg = null; 
+
+        function saveLibrary() {
+            localStorage.setItem('yos1k_paint_lib', JSON.stringify(customLibrary));
+            renderLibrary();
+        }
+
+        function renderLibrary() {
+            elements.libGrid.querySelectorAll('.custom-lib-item').forEach(i => i.remove());
+            customLibrary.forEach((data, index) => {
+                const div = document.createElement('div');
+                div.className = 'lib-item-mini shadow-lg custom-lib-item';
+                div.innerHTML = `<img src="${data}"><div class="delete-btn" onclick="deleteFromLib(event, ${index})">✕</div>`;
+                div.onclick = () => insertObject(data);
+                elements.libGrid.insertBefore(div, elements.uploadObjectBtn);
+            });
+        }
+
+        window.deleteFromLib = (e, index) => {
+            e.stopPropagation(); customLibrary.splice(index, 1); saveLibrary();
+        };
+
+        function addToLibrary(url) {
+            customLibrary.unshift(url); if (customLibrary.length > 30) customLibrary.pop(); saveLibrary();
+        }
+
+        function lerp(start, end, amt) { return (1 - amt) * start + amt * end; }
+
+        function saveState() {
             if (historyIdx < history.length - 1) {
                 history = history.slice(0, historyIdx + 1);
             }
-            history.push(data);
-            if (history.length > maxHistory) history.shift();
+            history.push(ctx.getImageData(0, 0, elements.canvas.width, elements.canvas.height));
+            if (history.length > 50) history.shift();
             else historyIdx++;
             updateHistoryButtons();
-            localStorage.setItem('yos1k_paint_local', data);
         }
 
         function undo() {
             if (historyIdx > 0) {
                 historyIdx--;
-                loadHistoryState();
+                ctx.putImageData(history[historyIdx], 0, 0);
+                updateHistoryButtons();
             }
         }
 
         function redo() {
             if (historyIdx < history.length - 1) {
                 historyIdx++;
-                loadHistoryState();
-            }
-        }
-
-        function loadHistoryState() {
-            const img = new Image();
-            img.onload = () => {
-                ctx.globalCompositeOperation = 'source-over';
-                ctx.clearRect(0, 0, elements.canvas.width, elements.canvas.height);
-                ctx.drawImage(img, 0, 0);
+                ctx.putImageData(history[historyIdx], 0, 0);
                 updateHistoryButtons();
-                localStorage.setItem('yos1k_paint_local', img.src);
-            };
-            img.src = history[historyIdx];
+            }
         }
 
         function updateHistoryButtons() {
-            elements.undo.disabled = historyIdx <= 0;
-            elements.redo.disabled = historyIdx >= history.length - 1;
+            elements.undo.disabled = (historyIdx <= 0);
+            elements.redo.disabled = (historyIdx >= history.length - 1);
         }
 
-        const getPos = (e) => {
-            const r = elements.canvas.getBoundingClientRect();
-            const touch = e.touches ? e.touches[0] : e;
-            return { x: touch.clientX - r.left, y: touch.clientY - r.top };
-        };
+        elements.enterBtn.addEventListener('click', () => {
+            elements.welcome.classList.add('app-hidden');
+            elements.main.classList.remove('pointer-events-none', 'opacity-0', 'scale-95');
+            elements.main.classList.add('opacity-100', 'scale-100');
+            setTimeout(initCanvas, 300);
+            renderLibrary();
+        });
+
+        function initCanvas() {
+            const w = Math.floor(elements.wrapper.clientWidth * 0.95);
+            const h = Math.floor(elements.wrapper.clientHeight * 0.95);
+            
+            elements.canvas.width = w; 
+            elements.canvas.height = h;
+            ctx.clearRect(0, 0, w, h);
+            saveState(); 
+            requestAnimationFrame(smoothUpdate);
+        }
+
+        function smoothUpdate() {
+            mouse.x = lerp(mouse.x, mouse.targetX, 0.25);
+            mouse.y = lerp(mouse.y, mouse.targetY, 0.25);
+            objectPos.x = lerp(objectPos.x, mouse.targetX, 0.12);
+            objectPos.y = lerp(objectPos.y, mouse.targetY, 0.12);
+            
+            const size = parseInt(elements.size.value);
+            const rect = elements.canvas.getBoundingClientRect();
+            elements.brushCursor.style.width = size + 'px';
+            elements.brushCursor.style.height = size + 'px';
+            elements.brushCursor.style.left = (rect.left + mouse.targetX * (rect.width/elements.canvas.width)) + 'px';
+            elements.brushCursor.style.top = (rect.top + mouse.targetY * (rect.height/elements.canvas.height)) + 'px';
+
+            if (isMovingSelection) {
+                if (activeLibraryImg) {
+                    updateObjectScale();
+                }
+                elements.floatingPreview.style.left = `${objectPos.x * (rect.width/elements.canvas.width)}px`;
+                elements.floatingPreview.style.top = `${objectPos.y * (rect.height/elements.canvas.height)}px`;
+            }
+
+            if (analyzer && !elements.audio.paused) {
+                analyzer.getByteFrequencyData(dataArray);
+                if (elements.audio.duration) {
+                    elements.offsetSlider.value = (elements.audio.currentTime / elements.audio.duration) * 100;
+                }
+                elements.visBars.forEach((bar, i) => {
+                    const value = dataArray[i * 4] || 0;
+                    const h = 4 + (value / 255) * 28;
+                    bar.style.height = h + 'px';
+                    bar.style.background = `rgb(250, ${204 - value/4}, ${21})`;
+                });
+            } else {
+                elements.visBars.forEach(bar => bar.style.height = '4px');
+            }
+            requestAnimationFrame(smoothUpdate);
+        }
+
+        function updateObjectScale() {
+            if (!activeLibraryImg) return;
+            const size = parseInt(elements.size.value);
+            const ratio = activeLibraryImg.height / activeLibraryImg.width;
+            const w = size;
+            const h = size * ratio;
+            elements.floatingPreview.width = w;
+            elements.floatingPreview.height = h;
+            floatCtx.clearRect(0,0,w,h);
+            floatCtx.drawImage(activeLibraryImg, 0, 0, w, h);
+            selectedImageData = floatCtx.getImageData(0,0,w,h);
+        }
+
+        elements.loadMusicBtn.addEventListener('click', () => {
+            initAudio();
+            elements.musicInput.click();
+        });
+
+        elements.musicInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                elements.audio.src = url;
+                elements.audio.play();
+                elements.playIcon.innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+            }
+        });
+
+        elements.musicToggle.addEventListener('click', () => {
+            initAudio();
+            if (elements.audio.paused) {
+                elements.audio.play();
+                elements.playIcon.innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+            } else {
+                elements.audio.pause();
+                elements.playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+            }
+        });
+
+        elements.audioSettingsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            elements.audioSettingsMenu.classList.toggle('show');
+        });
+
+        window.addEventListener('click', () => elements.audioSettingsMenu.classList.remove('show'));
+        elements.audioSettingsMenu.addEventListener('click', (e) => e.stopPropagation());
+
+        elements.speedSlider.addEventListener('input', (e) => {
+            const val = e.target.value;
+            elements.audio.playbackRate = val;
+            elements.speedValue.innerText = val + 'x';
+        });
+
+        elements.offsetSlider.addEventListener('input', (e) => {
+            if (elements.audio.duration) {
+                elements.audio.currentTime = (e.target.value / 100) * elements.audio.duration;
+            }
+        });
+
+        elements.volume.addEventListener('input', (e) => elements.audio.volume = e.target.value);
+
+        let selectedImageData = null, isMovingSelection = false, selectionStart = null, pastedImageBuffer = null;
+
+        window.addEventListener('paste', async (e) => {
+            const items = e.clipboardData.items;
+            for (let item of items) {
+                if (item.type.includes('image')) {
+                    const blob = item.getAsFile();
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const img = new Image();
+                        img.onload = () => { pastedImageBuffer = img; elements.pasteModal.classList.add('show'); };
+                        img.src = event.target.result;
+                    };
+                    reader.readAsDataURL(blob);
+                }
+            }
+        });
+
+        elements.pasteAsObject.addEventListener('click', () => {
+            if (!pastedImageBuffer) return;
+            addToLibrary(pastedImageBuffer.src);
+            insertObject(pastedImageBuffer.src);
+            elements.pasteModal.classList.remove('show');
+        });
+
+        elements.pasteAsBackground.addEventListener('click', () => {
+            if (!pastedImageBuffer) return;
+            ctx.drawImage(pastedImageBuffer, 0, 0, elements.canvas.width, elements.canvas.height);
+            saveState(); elements.pasteModal.classList.remove('show');
+        });
+
+        function getPos(e) {
+            const rect = elements.canvas.getBoundingClientRect();
+            const cx = e.touches ? e.touches[0].clientX : e.clientX;
+            const cy = e.touches ? e.touches[0].clientY : e.clientY;
+            return {
+                x: (cx - rect.left) * (elements.canvas.width / rect.width),
+                y: (cy - rect.top) * (elements.canvas.height / rect.height)
+            };
+        }
 
         function startDrawing(e) {
-            const {x, y} = getPos(e);
-
-            if (currentTool === 'scissors') {
-                if (movingImageData) {
-                    // Если уже есть вырезанный объект, начинаем перемещение
-                    isMoving = true;
-                    dragOffset = { x: x - selectionRect.x, y: y - selectionRect.y };
-                } else {
-                    // Начинаем выделение
-                    selectionRect = { x, y, w: 0, h: 0 };
-                    isDrawing = true;
-                }
-                return;
+            const pos = getPos(e);
+            if (isMovingSelection) {
+                const temp = document.createElement('canvas');
+                temp.width = selectedImageData.width; temp.height = selectedImageData.height;
+                temp.getContext('2d').putImageData(selectedImageData, 0, 0);
+                ctx.drawImage(temp, pos.x - temp.width/2, pos.y - temp.height/2);
+                isMovingSelection = false; 
+                elements.floatingPreview.style.display = 'none';
+                activeLibraryImg = null; 
+                saveState(); return;
             }
-
-            if (currentTool === 'object' && selectedObject) {
-                drawObject(x, y);
-                saveToHistory();
-                return;
-            }
-            
             if (currentTool === 'text') {
-                drawText(x, y);
-                saveToHistory();
-                return;
+                const font = elements.fontPicker.value;
+                const size = elements.size.value;
+                ctx.font = `${size}px ${font}`; ctx.fillStyle = elements.color.value;
+                ctx.fillText(elements.textInput.value || "Текст", pos.x, pos.y);
+                saveState(); return;
             }
-
-            if (currentTool === 'bucket') {
-                floodFill(Math.floor(x), Math.floor(y), elements.color.value);
-                saveToHistory();
-                return;
+            isDrawing = true; lastPos = pos;
+            if (currentTool === 'bucket') { floodFill(Math.floor(pos.x), Math.floor(pos.y), elements.color.value); saveState(); isDrawing = false; }
+            else if (currentTool === 'scissors') { selectionStart = pos; elements.selectionBox.style.display = 'block'; }
+            else if (currentTool === 'wave') {
+                lastWaveX = pos.x;
+                lastWaveY = pos.y;
             }
-            
-            isDrawing = true;
-            ctx.beginPath();
-            ctx.moveTo(x, y);
-            ctx.strokeStyle = elements.color.value;
-            ctx.lineWidth = parseInt(elements.size.value);
-            ctx.globalCompositeOperation = currentTool === 'eraser' ? 'destination-out' : 'source-over';
         }
 
-        function draw(e) {
-            const {x, y} = getPos(e);
+        let lastWaveX = 0, lastWaveY = 0;
 
+        function handleMouseMove(e) {
+            const pos = getPos(e);
+            mouse.targetX = pos.x; mouse.targetY = pos.y;
+            if (!isDrawing) return;
+            let size = parseInt(elements.size.value); 
+            const color = elements.color.value;
+            const mode = elements.brushMode.value;
+            
             if (currentTool === 'scissors') {
-                if (isMoving && movingImageData) {
-                    // Перемещаем объект
-                    selectionRect.x = x - dragOffset.x;
-                    selectionRect.y = y - dragOffset.y;
-                    renderMovingObject();
-                    return;
+                const rect = elements.canvas.getBoundingClientRect();
+                const x1 = Math.min(pos.x, selectionStart.x) * (rect.width/elements.canvas.width);
+                const y1 = Math.min(pos.y, selectionStart.y) * (rect.height/elements.canvas.height);
+                const w = Math.abs(pos.x - selectionStart.x) * (rect.width/elements.canvas.width);
+                const h = Math.abs(pos.y - selectionStart.y) * (rect.height/elements.canvas.height);
+                elements.selectionBox.style.left = x1+'px'; elements.selectionBox.style.top = y1+'px';
+                elements.selectionBox.style.width = w+'px'; elements.selectionBox.style.height = h+'px';
+            } else if (currentTool === 'wave') {
+                const dx = pos.x - lastWaveX;
+                const dy = pos.y - lastWaveY;
+                if (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1) {
+                    applyLiquifyEffect(pos.x, pos.y, dx, dy, size);
+                    lastWaveX = pos.x;
+                    lastWaveY = pos.y;
                 }
-                if (isDrawing && selectionRect) {
-                    // Обновляем рамку выделения
-                    selectionRect.w = x - selectionRect.x;
-                    selectionRect.h = y - selectionRect.y;
-                    drawSelectionFrame();
-                    return;
+            } else {
+                ctx.lineWidth = size;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+
+                if (currentTool === 'eraser') {
+                    ctx.globalCompositeOperation = 'destination-out';
+                } else {
+                    ctx.globalCompositeOperation = 'source-over';
+                    ctx.strokeStyle = color;
+                }
+
+                if (mode === 'glow' && currentTool === 'brush') {
+                    updateGlowTexture(color, size);
+                    const dist = Math.hypot(pos.x - lastPos.x, pos.y - lastPos.y);
+                    const angle = Math.atan2(pos.y - lastPos.y, pos.x - lastPos.x);
+                    for (let i = 0; i < dist; i += 1) {
+                        const px = lastPos.x + Math.cos(angle) * i;
+                        const py = lastPos.y + Math.sin(angle) * i;
+                        ctx.drawImage(glowCanvas, px - glowCanvas.width/2, py - glowCanvas.height/2);
+                    }
+                } else if (mode === 'pixel') {
+                    const s = Math.max(5, size);
+                    if (currentTool === 'eraser') {
+                        ctx.clearRect(Math.floor(pos.x/s)*s, Math.floor(pos.y/s)*s, s, s);
+                    } else {
+                        ctx.fillStyle = color;
+                        ctx.fillRect(Math.floor(pos.x/s)*s, Math.floor(pos.y/s)*s, s, s);
+                    }
+                } else if (mode === 'rainbow' && currentTool === 'brush') {
+                    hue = (hue + 2) % 360;
+                    ctx.strokeStyle = `hsl(${hue}, 80%, 60%)`;
+                    ctx.beginPath(); ctx.moveTo(lastPos.x, lastPos.y); ctx.lineTo(pos.x, pos.y); ctx.stroke();
+                } else {
+                    ctx.beginPath(); ctx.moveTo(lastPos.x, lastPos.y); ctx.lineTo(pos.x, pos.y); ctx.stroke();
+                }
+                ctx.globalCompositeOperation = 'source-over';
+            }
+            lastPos = pos;
+        }
+
+        function applyLiquifyEffect(cx, cy, dx, dy, radius) {
+            const r2 = radius * radius;
+            const areaSize = Math.ceil(radius * 2);
+            let x0 = Math.floor(cx - radius);
+            let y0 = Math.floor(cy - radius);
+            let drawX = Math.max(0, x0);
+            let drawY = Math.max(0, y0);
+            let endX = Math.min(elements.canvas.width, x0 + areaSize);
+            let endY = Math.min(elements.canvas.height, y0 + areaSize);
+            let actualW = endX - drawX;
+            let actualH = endY - drawY;
+            if (actualW <= 0 || actualH <= 0) return;
+            const imgData = ctx.getImageData(drawX, drawY, actualW, actualH);
+            const pixels = new Uint32Array(imgData.data.buffer);
+            const original = new Uint32Array(pixels);
+            for (let j = 0; j < actualH; j++) {
+                const currentY = drawY + j;
+                const ry = currentY - cy;
+                for (let i = 0; i < actualW; i++) {
+                    const currentX = drawX + i;
+                    const rx = currentX - cx;
+                    const d2 = rx * rx + ry * ry;
+                    if (d2 < r2) {
+                        const dist = Math.sqrt(d2);
+                        const weight = Math.pow(1 - dist / radius, 2);
+                        const sx = Math.round(i - (dx * weight * 0.8));
+                        const sy = Math.round(j - (dy * weight * 0.8));
+                        if (sx >= 0 && sx < actualW && sy >= 0 && sy < actualH) {
+                            pixels[j * actualW + i] = original[sy * actualW + sx];
+                        }
+                    }
                 }
             }
-
-            if (!isDrawing) return;
-            ctx.lineTo(x, y);
-            ctx.stroke();
+            ctx.putImageData(imgData, drawX, drawY);
         }
 
         function stopDrawing() {
+            if (!isDrawing) return; isDrawing = false;
             if (currentTool === 'scissors') {
-                if (isMoving) {
-                    isMoving = false;
-                    // Мы не "приклеиваем" объект сразу, чтобы можно было двигать дальше. 
-                    // Приклеивание произойдет при смене инструмента.
-                } else if (isDrawing && selectionRect) {
-                    isDrawing = false;
-                    // Финализируем выборку
-                    if (Math.abs(selectionRect.w) > 5 && Math.abs(selectionRect.h) > 5) {
-                        captureSelection();
-                    } else {
-                        selectionRect = null;
-                        sCtx.clearRect(0, 0, elements.selectionCanvas.width, elements.selectionCanvas.height);
-                    }
+                const sBox = elements.selectionBox.getBoundingClientRect();
+                const cRect = elements.canvas.getBoundingClientRect();
+                const x = (sBox.left - cRect.left) * (elements.canvas.width / cRect.width);
+                const y = (sBox.top - cRect.top) * (elements.canvas.height / cRect.height);
+                const w = sBox.width * (elements.canvas.width / cRect.width);
+                const h = sBox.height * (elements.canvas.height / cRect.height);
+                if (w > 5) {
+                    selectedImageData = ctx.getImageData(x, y, w, h);
+                    elements.floatingPreview.width = w; elements.floatingPreview.height = h;
+                    floatCtx.putImageData(selectedImageData, 0, 0);
+                    elements.floatingPreview.style.display = 'block';
+                    ctx.clearRect(x, y, w, h);
+                    isMovingSelection = true;
                 }
-                return;
+                elements.selectionBox.style.display = 'none';
             }
-
-            if (!isDrawing) return;
-            ctx.closePath();
-            isDrawing = false;
-            saveToHistory();
+            saveState();
         }
 
-        function drawSelectionFrame() {
-            sCtx.clearRect(0, 0, elements.selectionCanvas.width, elements.selectionCanvas.height);
-            sCtx.setLineDash([5, 5]);
-            sCtx.strokeStyle = '#facc15';
-            sCtx.lineWidth = 2;
-            sCtx.strokeRect(selectionRect.x, selectionRect.y, selectionRect.w, selectionRect.h);
+        function insertObject(url) {
+            const img = new Image(); img.crossOrigin = "anonymous";
+            img.onload = () => {
+                activeLibraryImg = img;
+                updateObjectScale(); 
+                elements.floatingPreview.style.display = 'block'; 
+                isMovingSelection = true;
+            };
+            img.src = url;
         }
 
-        function captureSelection() {
-            // Приводим к положительным значениям
-            if (selectionRect.w < 0) { selectionRect.x += selectionRect.w; selectionRect.w = Math.abs(selectionRect.w); }
-            if (selectionRect.h < 0) { selectionRect.y += selectionRect.h; selectionRect.h = Math.abs(selectionRect.h); }
-
-            // Захватываем пиксели
-            movingImageData = ctx.getImageData(selectionRect.x, selectionRect.y, selectionRect.w, selectionRect.h);
-            
-            // Удаляем оригинал с основного холста
-            ctx.clearRect(selectionRect.x, selectionRect.y, selectionRect.w, selectionRect.h);
-            
-            renderMovingObject();
-        }
-
-        function renderMovingObject() {
-            sCtx.clearRect(0, 0, elements.selectionCanvas.width, elements.selectionCanvas.height);
-            if (!movingImageData) return;
-            
-            // Рисуем временно на вспомогательном холсте для предпросмотра перемещения
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = selectionRect.w;
-            tempCanvas.height = selectionRect.h;
-            tempCanvas.getContext('2d').putImageData(movingImageData, 0, 0);
-            
-            sCtx.drawImage(tempCanvas, selectionRect.x, selectionRect.y);
-            
-            // Рамка вокруг
-            sCtx.setLineDash([2, 2]);
-            sCtx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-            sCtx.strokeRect(selectionRect.x, selectionRect.y, selectionRect.w, selectionRect.h);
-        }
-
-        function applyMovingObject() {
-            if (movingImageData && selectionRect) {
-                const tempCanvas = document.createElement('canvas');
-                tempCanvas.width = selectionRect.w;
-                tempCanvas.height = selectionRect.h;
-                tempCanvas.getContext('2d').putImageData(movingImageData, 0, 0);
-                
-                ctx.globalCompositeOperation = 'source-over';
-                ctx.drawImage(tempCanvas, selectionRect.x, selectionRect.y);
-                
-                movingImageData = null;
-                selectionRect = null;
-                sCtx.clearRect(0, 0, elements.selectionCanvas.width, elements.selectionCanvas.height);
-                saveToHistory();
-            }
-        }
-
-        function drawText(x, y) {
-            const text = elements.textInput.value || "Yos1k";
-            ctx.globalCompositeOperation = 'source-over';
-            ctx.font = `bold ${elements.size.value * 2}px sans-serif`;
-            ctx.fillStyle = elements.color.value;
-            ctx.textAlign = 'center';
-            ctx.fillText(text, x, y);
-        }
-
-        function drawObject(x, y) {
-            const size = parseInt(elements.size.value) * 2;
-            ctx.globalCompositeOperation = 'source-over';
-            if (selectedObject.type === 'emoji') {
-                ctx.font = `${size}px serif`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(selectedObject.value, x, y);
-            } else {
-                const img = selectedObject.value;
-                const aspect = img.width / img.height;
-                let w = size, h = size;
-                if (aspect > 1) h = size / aspect; else w = size * aspect;
-                ctx.drawImage(img, x - w/2, y - h/2, w, h);
-            }
-        }
-
-        function floodFill(startX, startY, fillHex) {
-            const img = ctx.getImageData(0, 0, elements.canvas.width, elements.canvas.height);
-            const startIdx = (startY * img.width + startX) * 4;
-            const startR = img.data[startIdx], startG = img.data[startIdx+1], startB = img.data[startIdx+2], startA = img.data[startIdx+3];
-            
-            const r = parseInt(fillHex.slice(1,3), 16);
-            const g = parseInt(fillHex.slice(3,5), 16);
-            const b = parseInt(fillHex.slice(5,7), 16);
-
-            if (startR === r && startG === g && startB === b && startA === 255) return;
-
-            const stack = [[startX, startY]];
-            while(stack.length) {
-                const [cx, cy] = stack.pop();
-                if (cx < 0 || cx >= img.width || cy < 0 || cy >= img.height) continue;
-                const idx = (cy * img.width + cx) * 4;
-                if (img.data[idx] === startR && img.data[idx+1] === startG && img.data[idx+2] === startB && img.data[idx+3] === startA) {
-                    img.data[idx] = r; img.data[idx+1] = g; img.data[idx+2] = b; img.data[idx+3] = 255;
-                    stack.push([cx-1, cy], [cx+1, cy], [cx, cy-1], [cx, cy+1]);
+        function floodFill(x, y, col) {
+            const img = ctx.getImageData(0,0, elements.canvas.width, elements.canvas.height), data = img.data;
+            const r = parseInt(col.slice(1,3), 16), g = parseInt(col.slice(3,5), 16), b = parseInt(col.slice(5,7), 16);
+            const start = (y * elements.canvas.width + x) * 4, sr = data[start], sg = data[start+1], sb = data[start+2], sa = data[start+3];
+            if (sr === r && sg === g && sb === b && sa === 255) return;
+            const q = [[x, y]];
+            while(q.length) {
+                const [cx, cy] = q.pop(); const i = (cy * elements.canvas.width + cx) * 4;
+                if (cx >= 0 && cx < elements.canvas.width && cy >= 0 && cy < elements.canvas.height && data[i] === sr && data[i+1] === sg && data[i+2] === sb && data[i+3] === sa) {
+                    data[i] = r; data[i+1] = g; data[i+2] = b; data[i+3] = 255;
+                    q.push([cx+1, cy], [cx-1, cy], [cx, cy+1], [cx, cy-1]);
                 }
             }
             ctx.putImageData(img, 0, 0);
         }
 
-        // --- ИНСТРУМЕНТЫ И СОБЫТИЯ ---
-
-        elements.canvas.onmousedown = startDrawing;
-        window.onmousemove = draw;
-        window.onmouseup = stopDrawing;
-
-        // Сенсорная поддержка
-        const handleTouch = (e, fn) => {
-            const r = elements.canvas.getBoundingClientRect();
-            const touch = e.touches[0];
-            if (touch) fn({ clientX: touch.clientX, clientY: touch.clientY });
-        };
-        elements.canvas.ontouchstart = (e) => { e.preventDefault(); handleTouch(e, startDrawing); };
-        elements.canvas.ontouchmove = (e) => { e.preventDefault(); handleTouch(e, draw); };
-        elements.canvas.ontouchend = (e) => { e.preventDefault(); stopDrawing(); };
-
-        elements.undo.onclick = () => { applyMovingObject(); undo(); };
-        elements.redo.onclick = () => { applyMovingObject(); redo(); };
-        elements.clear.onclick = () => { 
-            applyMovingObject();
+        elements.canvas.addEventListener('mousedown', startDrawing);
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', stopDrawing);
+        elements.clear.addEventListener('click', () => { 
             ctx.clearRect(0, 0, elements.canvas.width, elements.canvas.height); 
-            saveToHistory(); 
-        };
-
-        elements.size.oninput = (e) => elements.sizeDisplay.innerText = `Размер: ${e.target.value}px`;
-
-        ['brush', 'eraser', 'bucket', 'text', 'scissors'].forEach(tool => {
-            document.getElementById(`${tool}Btn`).onclick = () => {
-                if (currentTool === 'scissors') applyMovingObject();
-                
-                currentTool = tool;
-                document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
-                document.querySelectorAll('.object-item').forEach(b => b.classList.remove('selected'));
-                document.getElementById(`${tool}Btn`).classList.add('active');
-                elements.textInputWrap.classList.toggle('hidden', tool !== 'text');
-            };
+            saveState(); 
+        });
+        
+        elements.save.addEventListener('click', () => { 
+            const temp = document.createElement('canvas');
+            temp.width = elements.canvas.width;
+            temp.height = elements.canvas.height;
+            const tctx = temp.getContext('2d');
+            tctx.fillStyle = "white";
+            tctx.fillRect(0,0,temp.width,temp.height);
+            tctx.drawImage(elements.canvas, 0, 0);
+            
+            const a = document.createElement('a'); 
+            a.download = 'art.png'; 
+            a.href = temp.toDataURL(); 
+            a.click(); 
+        });
+        
+        elements.size.addEventListener('input', (e) => {
+            elements.sizeInput.value = e.target.value;
+            if (isMovingSelection && activeLibraryImg) updateObjectScale();
+        });
+        
+        elements.sizeInput.addEventListener('input', (e) => {
+            elements.size.value = e.target.value;
+            if (isMovingSelection && activeLibraryImg) updateObjectScale();
+        });
+        
+        document.querySelectorAll('.tool-btn').forEach(btn => {
+            btn.addEventListener('click', () => { 
+                if (!btn.classList.contains('history-btn') && !['loadMusicBtn', 'audioSettingsBtn', 'musicToggle'].includes(btn.id)) {
+                    currentTool = btn.id.replace('Btn', '');
+                    document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                }
+                if (btn.id === 'textBtn') {
+                    elements.textToolSettings.classList.remove('hidden');
+                    elements.modePanel.classList.add('hidden');
+                } else if (!btn.classList.contains('history-btn') && !['loadMusicBtn', 'audioSettingsBtn', 'musicToggle'].includes(btn.id)) {
+                    elements.textToolSettings.classList.add('hidden');
+                    elements.modePanel.classList.remove('hidden');
+                }
+            });
         });
 
-        elements.musicUpload.onchange = (e) => {
+        elements.uploadObjectBtn.addEventListener('click', () => elements.objectFile.click());
+        elements.objectFile.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
-                elements.audio.src = URL.createObjectURL(file);
-                elements.audio.play();
-                updatePlayIcon();
+                const r = new FileReader();
+                r.onload = (ev) => { addToLibrary(ev.target.result); insertObject(ev.target.result); };
+                r.readAsDataURL(file);
             }
-        };
-        elements.musicToggle.onclick = () => {
-            if (elements.audio.paused) elements.audio.play(); else elements.audio.pause();
-            updatePlayIcon();
-        };
-        elements.musicVol.oninput = (e) => elements.audio.volume = e.target.value;
-        function updatePlayIcon() {
-            elements.playIcon.innerHTML = elements.audio.paused 
-                ? '<path d="M8 5v14l11-7z"/>' 
-                : '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
-        }
-
-        function selectObj(type, value, el) {
-            if (currentTool === 'scissors') applyMovingObject();
-            currentTool = 'object';
-            selectedObject = {type, value};
-            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.object-item').forEach(b => b.classList.remove('selected'));
-            el.classList.add('selected');
-        }
-
-        document.querySelectorAll('.object-item').forEach(item => {
-            item.onclick = () => selectObj(item.dataset.type, item.dataset.value, item);
         });
 
-        elements.objectUpload.onchange = (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    const img = new Image();
-                    img.src = ev.target.result;
-                    img.onload = () => {
-                        const div = document.createElement('div');
-                        div.className = 'object-item';
-                        div.innerHTML = `<img src="${img.src}" class="w-8 h-8 object-contain">`;
-                        div.onclick = () => selectObj('image', img, div);
-                        elements.objectsContainer.prepend(div);
-                        selectObj('image', img, div);
-                    };
-                };
-                reader.readAsDataURL(file);
-            }
-        };
+        elements.container.addEventListener('mouseenter', () => elements.brushCursor.style.display = 'block');
+        elements.container.addEventListener('mouseleave', () => elements.brushCursor.style.display = 'none');
 
-        // СОХРАНЕНИЕ С БЕЛЫМ ФОНОМ
-        elements.save.onclick = () => {
-            applyMovingObject();
-            const tempCanvas = document.createElement('canvas');
-            const tempCtx = tempCanvas.getContext('2d');
-            tempCanvas.width = elements.canvas.width;
-            tempCanvas.height = elements.canvas.height;
-            tempCtx.fillStyle = '#ffffff';
-            tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-            tempCtx.drawImage(elements.canvas, 0, 0);
-            const link = document.createElement('a');
-            link.download = 'yos1k-paint.png';
-            link.href = tempCanvas.toDataURL('image/png');
-            link.click();
-        };
+        elements.undo.addEventListener('click', undo);
+        elements.redo.addEventListener('click', redo);
+        window.addEventListener('resize', initCanvas);
     </script>
 </body>
 </html>
