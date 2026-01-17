@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Yos1k Paint</title>
+    <title>Yos1k Paint 1.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Анимации интерфейса */
@@ -105,7 +105,7 @@
             border: 2px dashed #facc15;
             transform: translate(-50%, -50%);
             transition: none;
-            will-change: left, top;
+            will-change: left, top, transform;
             cursor: grab;
             pointer-events: auto;
         }
@@ -121,6 +121,47 @@
             z-index: 55;
             pointer-events: auto;
             box-shadow: 0 0 5px rgba(0,0,0,0.5);
+        }
+
+        /* РЫЧАГ ПОВОРОТА */
+        .rotate-handle {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            background: #facc15;
+            border: 2px solid #000;
+            border-radius: 50%;
+            top: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            cursor: alias;
+            z-index: 60;
+            pointer-events: auto;
+            box-shadow: 0 0 8px rgba(250, 204, 21, 0.5);
+        }
+        .rotate-line {
+            position: absolute;
+            width: 2px;
+            height: 30px;
+            background: #facc15;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            pointer-events: none;
+        }
+        #rotationBadge {
+            position: absolute;
+            top: -70px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #facc15;
+            color: black;
+            font-size: 10px;
+            font-weight: 900;
+            padding: 2px 6px;
+            border-radius: 4px;
+            pointer-events: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
 
         #selectionBox {
@@ -180,7 +221,6 @@
             transform: scale(1.1) rotate(5deg);
         }
 
-        /* ДИСКОРД КНОПКА */
         .discord-link {
             position: fixed;
             bottom: 32px;
@@ -455,7 +495,6 @@
             animation: fadeInUp 0.3s ease-out;
         }
 
-        /* Кнопка замка */
         .lock-btn {
             width: 32px;
             height: 32px;
@@ -473,6 +512,34 @@
             color: #facc15;
             border-color: #facc15;
             background: rgba(250, 204, 21, 0.1);
+        }
+
+        /* Дополнительные стили для поворота */
+        .rotation-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            padding: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        #customAngleInput {
+            width: 55px;
+            height: 38px;
+            font-size: 16px;
+            text-align: center;
+            background: #0f172a !important;
+            border-color: #facc15 !important;
+        }
+
+        #rotate45Btn {
+            height: 38px;
+            padding: 0 16px;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
 
     </style>
@@ -500,10 +567,8 @@
 
     <!-- Начальный экран -->
     <div id="welcomeScreen">
-        <!-- Аватарка Йосика -->
         <img id="welcomeAvatar" src="https://yt3.googleusercontent.com/E51f-Ku1QqArwy4dqPzwugfJRSQYK2cCEmSS1QFSJm9epWo3qIP7iRcHkjQJLPfhIoliAzHroA=s900-c-k-c0x00ffffff-no-rj" alt="Yos1k" class="corner-avatar">
         
-        <!-- КНОПКА ДИСКОРД -->
         <a href="https://discord.gg/dJDp5P3fsT" target="_blank" class="discord-link" title="Наш Discord">
             <svg width="32" height="32" viewBox="0 0 127.14 96.36">
                 <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.71,32.65-1.82,56.6.4,80.21a105.73,105.73,0,0,0,32.17,16.15,77.7,77.7,0,0,0,6.89-11.11,68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1,105.25,105.25,0,0,0,32.19-16.14c2.72-27.09-4.5-50.84-19.41-72.13ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z"/>
@@ -511,7 +576,6 @@
         </a>
 
         <div class="p-12 rounded-[3.5rem] text-center max-w-lg mx-4 border border-white/10 bg-black/40 backdrop-blur-3xl shadow-2xl">
-             <!-- Убрано 1.1 -->
              <h1 class="text-7xl font-black mb-4 text-white" style="background: linear-gradient(to right, #ef4444, #facc15); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Yos1k paint</h1>
              
              <a href="https://www.youtube.com/@yos1kGD" target="_blank" class="flex items-center justify-center gap-3 mb-12 hover:scale-110 active:scale-95 transition-transform group">
@@ -542,7 +606,6 @@
                     </div>
                 </div>
 
-                <!-- КОНТРОЛЛЫ РАЗМЕРА ОБЪЕКТА -->
                 <div id="objectSizeSection" class="hidden flex items-center gap-4">
                     <div class="flex flex-col items-center">
                         <span class="setting-label text-center">Ширина (X)</span>
@@ -557,6 +620,17 @@
                         <span class="setting-label text-center">Высота (Y)</span>
                         <input type="number" id="objHeightInput" value="100" min="1" max="2000" class="w-20">
                     </div>
+
+                    <div class="flex flex-col items-center ml-2">
+                        <span class="setting-label text-center">Угол</span>
+                        <div class="rotation-controls">
+                            <div class="flex items-center gap-1">
+                                <input type="number" id="customAngleInput" value="45" min="-360" max="360" title="Введи угол в градусах">
+                                <button id="rotate45Btn" class="bg-yellow-500 text-black font-black rounded-xl hover:bg-yellow-600 active:scale-90 transition-all">Повернуть</button>
+                            </div>
+                        </div>
+                    </div>
+
                     <button id="finishObjectBtn" class="h-10 px-6 bg-green-500 text-white font-black rounded-xl hover:bg-green-600 active:scale-95 transition-all">ГОТОВО</button>
                 </div>
 
@@ -648,7 +722,6 @@
         </div>
 
         <div id="canvasWrapper" class="relative flex-grow flex items-center justify-center p-4 overflow-hidden bg-slate-950">
-            <!-- ПАНЕЛЬ ОБЪЕКТОВ -->
             <div id="objectTable">
                 <span class="lib-header-text">Библиотека объектов</span>
                 <div class="lib-grid" id="libGrid">
@@ -669,7 +742,6 @@
             <div class="canvas-container" id="container">
                 <canvas id="paintCanvas"></canvas>
                 
-                <!-- ОБЛАСТЬ ВЫДЕЛЕНИЯ -->
                 <div id="selectionBox">
                     <div class="resize-handle" style="top: -6px; left: -6px;"></div>
                     <div class="resize-handle" style="top: -6px; left: 50%; transform: translateX(-50%);"></div>
@@ -681,8 +753,11 @@
                     <div class="resize-handle" style="bottom: -6px; right: -6px;"></div>
                 </div>
 
-                <!-- КОНТЕЙНЕР ДЛЯ РЕЖИМА ВСТАВКИ/ПЕРЕМЕЩЕНИЯ -->
                 <div id="objectResizeHandles">
+                    <div id="rotationBadge">0°</div>
+                    <div class="rotate-line"></div>
+                    <div class="rotate-handle" id="rotateHandle"></div>
+
                     <div class="resize-handle" data-h="nw" style="top: -6px; left: -6px; cursor: nw-resize;"></div>
                     <div class="resize-handle" data-h="n"  style="top: -6px; left: 50%; transform: translateX(-50%); cursor: n-resize;"></div>
                     <div class="resize-handle" data-h="ne" style="top: -6px; right: -6px; cursor: ne-resize;"></div>
@@ -733,6 +808,8 @@
             playIcon: document.getElementById('playIcon'),
             selectionBox: document.getElementById('selectionBox'),
             objectResizeHandles: document.getElementById('objectResizeHandles'),
+            rotateHandle: document.getElementById('rotateHandle'),
+            rotationBadge: document.getElementById('rotationBadge'),
             floatingPreview: document.getElementById('floatingPreview'),
             visBars: document.querySelectorAll('.vis-bar'),
             objectFile: document.getElementById('objectFile'),
@@ -750,7 +827,9 @@
             objectSizeSection: document.getElementById('objectSizeSection'),
             brushSizeSection: document.getElementById('brushSizeSection'),
             finishObjectBtn: document.getElementById('finishObjectBtn'),
-            lockSizeBtn: document.getElementById('lockSizeBtn')
+            lockSizeBtn: document.getElementById('lockSizeBtn'),
+            rotate45Btn: document.getElementById('rotate45Btn'),
+            customAngleInput: document.getElementById('customAngleInput')
         };
 
         const ctx = elements.canvas.getContext('2d', { willReadFrequently: true });
@@ -797,16 +876,12 @@
         }
 
         let isDrawing = false, currentTool = 'brush', lastPos = { x: 0, y: 0 }, hue = 0, history = [], historyIdx = -1;
-        let mouse = { x: 0, y: 0, targetX: 0, targetY: 0 }, objectPos = { x: 0, y: 0 };
+        let mouse = { x: 0, y: 0, targetX: 0, targetY: 0 }, objectPos = { x: 0, y: 0 }, objectRotation = 0;
         let customLibrary = JSON.parse(localStorage.getItem('yos1k_paint_lib') || '[]');
-        let activeLibraryImg = null; 
-        let selectedImageData = null, isMovingSelection = false, selectionStart = null, pastedImageBuffer = null;
+        let activeLibraryImg = null, selectedImageData = null, isMovingSelection = false, selectionStart = null, pastedImageBuffer = null;
 
-        let isDraggingObject = false;
-        let isResizingObject = false;
-        let activeHandle = '';
-        let dragOffset = { x: 0, y: 0 };
-        let resizeStart = { w: 0, h: 0, mx: 0, my: 0 };
+        let isDraggingObject = false, isResizingObject = false, isRotatingObject = false;
+        let activeHandle = '', dragOffset = { x: 0, y: 0 }, resizeStart = { w: 0, h: 0, mx: 0, my: 0 };
 
         function saveLibrary() {
             localStorage.setItem('yos1k_paint_lib', JSON.stringify(customLibrary));
@@ -835,9 +910,7 @@
         function lerp(start, end, amt) { return (1 - amt) * start + amt * end; }
 
         function saveState() {
-            if (historyIdx < history.length - 1) {
-                history = history.slice(0, historyIdx + 1);
-            }
+            if (historyIdx < history.length - 1) history = history.slice(0, historyIdx + 1);
             history.push(ctx.getImageData(0, 0, elements.canvas.width, elements.canvas.height));
             if (history.length > 50) history.shift();
             else historyIdx++;
@@ -906,14 +979,14 @@
             }
         }
 
-        // ЛОГИКА ЗАМКА
         elements.lockSizeBtn.addEventListener('click', () => {
             isProportionsLocked = !isProportionsLocked;
             elements.lockSizeBtn.classList.toggle('active', isProportionsLocked);
-            if (isProportionsLocked) {
-                elements.objHeightInput.value = elements.objWidthInput.value;
-                updateObjectScale();
-            }
+        });
+
+        elements.rotate45Btn.addEventListener('click', () => {
+            const val = parseFloat(elements.customAngleInput.value) || 45;
+            objectRotation += (val * Math.PI / 180);
         });
 
         elements.objWidthInput.addEventListener('input', () => {
@@ -930,13 +1003,17 @@
             if (!isMovingSelection) return;
             const w = parseInt(elements.objWidthInput.value);
             const h = parseInt(elements.objHeightInput.value);
-            ctx.drawImage(elements.floatingPreview, objectPos.x - w/2, objectPos.y - h/2);
-            isMovingSelection = false; 
-            isDraggingObject = false;
-            isResizingObject = false;
+            
+            ctx.save();
+            ctx.translate(objectPos.x, objectPos.y);
+            ctx.rotate(objectRotation);
+            ctx.drawImage(elements.floatingPreview, -w/2, -h/2);
+            ctx.restore();
+
+            isMovingSelection = false; isDraggingObject = false; isResizingObject = false; isRotatingObject = false;
             elements.floatingPreview.style.display = 'none';
             elements.objectResizeHandles.style.display = 'none';
-            activeLibraryImg = null; selectedImageData = null;
+            activeLibraryImg = null; selectedImageData = null; objectRotation = 0;
             elements.objectSizeSection.classList.add('hidden');
             elements.brushSizeSection.classList.remove('hidden');
             saveState();
@@ -950,26 +1027,22 @@
             
             const rect = elements.canvas.getBoundingClientRect();
 
-            if (isResizingObject) {
+            if (isRotatingObject) {
+                const dx = mouse.targetX - objectPos.x;
+                const dy = mouse.targetY - objectPos.y;
+                objectRotation = Math.atan2(dy, dx) + Math.PI/2;
+            } else if (isResizingObject) {
                 const dx = mouse.targetX - resizeStart.mx;
                 const dy = mouse.targetY - resizeStart.my;
-                
-                let newW = resizeStart.w;
-                let newH = resizeStart.h;
+                let newW = resizeStart.w, newH = resizeStart.h;
 
                 if (activeHandle.includes('e')) newW = resizeStart.w + dx * 2;
                 if (activeHandle.includes('w')) newW = resizeStart.w - dx * 2;
                 if (activeHandle.includes('s')) newH = resizeStart.h + dy * 2;
                 if (activeHandle.includes('n')) newH = resizeStart.h - dy * 2;
 
-                if (isProportionsLocked) {
-                    const side = Math.max(10, Math.max(newW, newH));
-                    newW = side;
-                    newH = side;
-                } else {
-                    newW = Math.max(10, newW);
-                    newH = Math.max(10, newH);
-                }
+                if (isProportionsLocked) { const side = Math.max(10, Math.max(newW, newH)); newW = side; newH = side; }
+                else { newW = Math.max(10, newW); newH = Math.max(10, newH); }
 
                 elements.objWidthInput.value = Math.round(newW);
                 elements.objHeightInput.value = Math.round(newH);
@@ -991,48 +1064,46 @@
             if (isMovingSelection) {
                 const pxX = objectPos.x * (rect.width/elements.canvas.width);
                 const pxY = objectPos.y * (rect.height/elements.canvas.height);
+                const styleVal = `translate(-50%, -50%) rotate(${objectRotation}rad)`;
                 elements.floatingPreview.style.left = `${pxX}px`;
                 elements.floatingPreview.style.top = `${pxY}px`;
+                elements.floatingPreview.style.transform = styleVal;
                 
                 elements.objectResizeHandles.style.display = 'block';
                 elements.objectResizeHandles.style.left = `${pxX}px`;
                 elements.objectResizeHandles.style.top = `${pxY}px`;
                 elements.objectResizeHandles.style.width = (parseInt(elements.objWidthInput.value) * (rect.width/elements.canvas.width)) + 'px';
                 elements.objectResizeHandles.style.height = (parseInt(elements.objHeightInput.value) * (rect.height/elements.canvas.height)) + 'px';
+                elements.objectResizeHandles.style.transform = styleVal;
+
+                // Обновляем текст градусов
+                const deg = Math.round((objectRotation * 180 / Math.PI) % 360);
+                elements.rotationBadge.innerText = (deg < 0 ? deg + 360 : deg) + '°';
             } else {
                 elements.objectResizeHandles.style.display = 'none';
             }
 
             if (analyzer && !elements.audio.paused) {
                 analyzer.getByteFrequencyData(dataArray);
-                if (elements.audio.duration) {
-                    elements.offsetSlider.value = (elements.audio.currentTime / elements.audio.duration) * 100;
-                }
+                if (elements.audio.duration) elements.offsetSlider.value = (elements.audio.currentTime / elements.audio.duration) * 100;
                 elements.visBars.forEach((bar, i) => {
                     const value = dataArray[i * 4] || 0;
-                    const h = 4 + (value / 255) * 28;
-                    bar.style.height = h + 'px';
+                    bar.style.height = (4 + (value / 255) * 28) + 'px';
                     bar.style.background = `rgb(250, ${204 - value/4}, ${21})`;
                 });
-            } else {
-                elements.visBars.forEach(bar => bar.style.height = '4px');
-            }
+            } else elements.visBars.forEach(bar => bar.style.height = '4px');
             requestAnimationFrame(smoothUpdate);
         }
 
         document.querySelectorAll('#objectResizeHandles .resize-handle').forEach(handle => {
-            handle.style.pointerEvents = 'auto';
             handle.addEventListener('mousedown', (e) => {
-                e.stopPropagation();
-                isResizingObject = true;
-                activeHandle = handle.dataset.h;
-                resizeStart = {
-                    w: parseInt(elements.objWidthInput.value),
-                    h: parseInt(elements.objHeightInput.value),
-                    mx: mouse.targetX,
-                    my: mouse.targetY
-                };
+                e.stopPropagation(); isResizingObject = true; activeHandle = handle.dataset.h;
+                resizeStart = { w: parseInt(elements.objWidthInput.value), h: parseInt(elements.objHeightInput.value), mx: mouse.targetX, my: mouse.targetY };
             });
+        });
+
+        elements.rotateHandle.addEventListener('mousedown', (e) => {
+            e.stopPropagation(); isRotatingObject = true;
         });
 
         elements.loadMusicBtn.addEventListener('click', () => { initAudio(); elements.musicInput.click(); });
@@ -1068,8 +1139,7 @@
             const items = e.clipboardData.items;
             for (let item of items) {
                 if (item.type.includes('image')) {
-                    const blob = item.getAsFile();
-                    const reader = new FileReader();
+                    const blob = item.getAsFile(), reader = new FileReader();
                     reader.onload = (event) => {
                         const img = new Image();
                         img.onload = () => { pastedImageBuffer = img; elements.pasteModal.classList.add('show'); };
@@ -1086,20 +1156,14 @@
 
         function getPos(e) {
             const rect = elements.canvas.getBoundingClientRect();
-            const cx = e.touches ? e.touches[0].clientX : e.clientX;
-            const cy = e.touches ? e.touches[0].clientY : e.clientY;
-            return {
-                x: (cx - rect.left) * (elements.canvas.width / rect.width),
-                y: (cy - rect.top) * (elements.canvas.height / rect.height)
-            };
+            const cx = e.touches ? e.touches[0].clientX : e.clientX, cy = e.touches ? e.touches[0].clientY : e.clientY;
+            return { x: (cx - rect.left) * (elements.canvas.width / rect.width), y: (cy - rect.top) * (elements.canvas.height / rect.height) };
         }
 
         elements.floatingPreview.addEventListener('mousedown', (e) => {
             if (isMovingSelection) {
-                e.stopPropagation();
-                isDraggingObject = true;
-                dragOffset.x = mouse.targetX - objectPos.x;
-                dragOffset.y = mouse.targetY - objectPos.y;
+                e.stopPropagation(); isDraggingObject = true;
+                dragOffset.x = mouse.targetX - objectPos.x; dragOffset.y = mouse.targetY - objectPos.y;
             }
         });
 
@@ -1121,19 +1185,15 @@
         let lastWaveX = 0, lastWaveY = 0;
 
         function handleMouseMove(e) {
-            const pos = getPos(e);
-            mouse.targetX = pos.x; mouse.targetY = pos.y;
-            
+            const pos = getPos(e); mouse.targetX = pos.x; mouse.targetY = pos.y;
             if (!isDrawing) return;
             let size = parseInt(elements.size.value); 
             const mode = elements.brushMode.value;
             
             if (currentTool === 'scissors') {
                 const rect = elements.canvas.getBoundingClientRect();
-                const x1 = Math.min(pos.x, selectionStart.x) * (rect.width/elements.canvas.width);
-                const y1 = Math.min(pos.y, selectionStart.y) * (rect.height/elements.canvas.height);
-                const w = Math.abs(pos.x - selectionStart.x) * (rect.width/elements.canvas.width);
-                const h = Math.abs(pos.y - selectionStart.y) * (rect.height/elements.canvas.height);
+                const x1 = Math.min(pos.x, selectionStart.x) * (rect.width/elements.canvas.width), y1 = Math.min(pos.y, selectionStart.y) * (rect.height/elements.canvas.height);
+                const w = Math.abs(pos.x - selectionStart.x) * (rect.width/elements.canvas.width), h = Math.abs(pos.y - selectionStart.y) * (rect.height/elements.canvas.height);
                 elements.selectionBox.style.left = x1+'px'; elements.selectionBox.style.top = y1+'px';
                 elements.selectionBox.style.width = w+'px'; elements.selectionBox.style.height = h+'px';
             } else if (currentTool === 'wave') {
@@ -1147,10 +1207,7 @@
                 if (mode === 'glow' && currentTool === 'brush') {
                     updateGlowTexture(elements.color.value, size);
                     const dist = Math.hypot(pos.x - lastPos.x, pos.y - lastPos.y), angle = Math.atan2(pos.y - lastPos.y, pos.x - lastPos.x);
-                    for (let i = 0; i < dist; i += 1) {
-                        const px = lastPos.x + Math.cos(angle) * i, py = lastPos.y + Math.sin(angle) * i;
-                        ctx.drawImage(glowCanvas, px - glowCanvas.width/2, py - glowCanvas.height/2);
-                    }
+                    for (let i = 0; i < dist; i += 1) ctx.drawImage(glowCanvas, (lastPos.x + Math.cos(angle) * i) - glowCanvas.width/2, (lastPos.y + Math.sin(angle) * i) - glowCanvas.height/2);
                 } else if (mode === 'pixel') {
                     const s = Math.max(5, size);
                     if (currentTool === 'eraser') ctx.clearRect(Math.floor(pos.x/s)*s, Math.floor(pos.y/s)*s, s, s);
@@ -1185,8 +1242,7 @@
         }
 
         function stopDrawing() {
-            isDraggingObject = false; 
-            isResizingObject = false; 
+            isDraggingObject = false; isResizingObject = false; isRotatingObject = false;
             if (!isDrawing) return; isDrawing = false;
             if (currentTool === 'scissors') {
                 const sBox = elements.selectionBox.getBoundingClientRect(), cRect = elements.canvas.getBoundingClientRect();
@@ -1194,11 +1250,9 @@
                 const w = sBox.width * (elements.canvas.width / cRect.width), h = sBox.height * (elements.canvas.height / cRect.height);
                 if (w > 5) {
                     selectedImageData = ctx.getImageData(x, y, w, h);
-                    elements.objWidthInput.value = Math.round(w); 
-                    elements.objHeightInput.value = isProportionsLocked ? Math.round(w) : Math.round(h);
+                    elements.objWidthInput.value = Math.round(w); elements.objHeightInput.value = Math.round(h);
                     elements.brushSizeSection.classList.add('hidden'); elements.objectSizeSection.classList.remove('hidden');
-                    updateObjectScale(); 
-                    objectPos.x = x + w/2; objectPos.y = y + h/2;
+                    updateObjectScale(); objectPos.x = x + w/2; objectPos.y = y + h/2;
                     elements.floatingPreview.style.display = 'block'; ctx.clearRect(x, y, w, h); isMovingSelection = true;
                 }
                 elements.selectionBox.style.display = 'none';
@@ -1210,22 +1264,14 @@
             const img = new Image(); img.crossOrigin = "anonymous";
             img.onload = () => {
                 activeLibraryImg = img; selectedImageData = null;
-                const startSize = parseInt(elements.size.value);
-                const aspect = img.width / img.height;
-                if (isProportionsLocked) {
-                    elements.objWidthInput.value = startSize;
-                    elements.objHeightInput.value = startSize;
-                } else if (aspect >= 1) {
-                    elements.objWidthInput.value = startSize;
-                    elements.objHeightInput.value = Math.round(startSize / aspect);
-                } else {
-                    elements.objHeightInput.value = startSize;
-                    elements.objWidthInput.value = Math.round(startSize * aspect);
-                }
+                const startSize = parseInt(elements.size.value), aspect = img.width / img.height;
+                if (isProportionsLocked) { elements.objWidthInput.value = startSize; elements.objHeightInput.value = startSize; }
+                else if (aspect >= 1) { elements.objWidthInput.value = startSize; elements.objHeightInput.value = Math.round(startSize / aspect); }
+                else { elements.objHeightInput.value = startSize; elements.objWidthInput.value = Math.round(startSize * aspect); }
                 elements.brushSizeSection.classList.add('hidden'); elements.objectSizeSection.classList.remove('hidden');
-                updateObjectScale(); 
-                objectPos.x = elements.canvas.width/2; objectPos.y = elements.canvas.height/2;
+                updateObjectScale(); objectPos.x = elements.canvas.width/2; objectPos.y = elements.canvas.height/2;
                 elements.floatingPreview.style.display = 'block'; isMovingSelection = true;
+                objectRotation = 0;
             };
             img.src = url;
         }
@@ -1252,8 +1298,7 @@
         elements.clear.onclick = () => { ctx.clearRect(0, 0, elements.canvas.width, elements.canvas.height); saveState(); };
         elements.save.onclick = () => { 
             const temp = document.createElement('canvas'); temp.width = elements.canvas.width; temp.height = elements.canvas.height;
-            const tctx = temp.getContext('2d'); tctx.fillStyle = "white"; tctx.fillRect(0,0,temp.width,temp.height);
-            tctx.drawImage(elements.canvas, 0, 0);
+            const tctx = temp.getContext('2d'); tctx.fillStyle = "white"; tctx.fillRect(0,0,temp.width,temp.height); tctx.drawImage(elements.canvas, 0, 0);
             const a = document.createElement('a'); a.download = 'art.png'; a.href = temp.toDataURL(); a.click(); 
         };
         elements.size.oninput = (e) => elements.sizeInput.value = e.target.value;
@@ -1264,20 +1309,16 @@
                 if (!btn.classList.contains('history-btn') && !['loadMusicBtn', 'audioSettingsBtn', 'musicToggle'].includes(btn.id)) {
                     currentTool = btn.id.replace('Btn', '');
                     document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active');
+                    if (btn.id === 'textBtn') { elements.textToolSettings.classList.remove('hidden'); elements.modePanel.classList.add('hidden'); }
+                    else { elements.textToolSettings.classList.add('hidden'); elements.modePanel.classList.remove('hidden'); }
                 }
-                if (btn.id === 'textBtn') { elements.textToolSettings.classList.remove('hidden'); elements.modePanel.classList.add('hidden'); }
-                else if (!btn.classList.contains('history-btn') && !['loadMusicBtn', 'audioSettingsBtn', 'musicToggle'].includes(btn.id)) { elements.textToolSettings.classList.add('hidden'); elements.modePanel.classList.remove('hidden'); }
             });
         });
 
         elements.uploadObjectBtn.onclick = () => elements.objectFile.click();
         elements.objectFile.onchange = (e) => {
             const file = e.target.files[0];
-            if (file) {
-                const r = new FileReader();
-                r.onload = (ev) => { addToLibrary(ev.target.result); insertObject(ev.target.result); };
-                r.readAsDataURL(file);
-            }
+            if (file) { const r = new FileReader(); r.onload = (ev) => { addToLibrary(ev.target.result); insertObject(ev.target.result); }; r.readAsDataURL(file); }
         };
 
         elements.container.onmouseenter = () => elements.brushCursor.style.display = 'block';
