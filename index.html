@@ -342,24 +342,62 @@
             display: flex;
             flex-direction: column;
             animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s backwards;
-            overflow: visible; 
+            overflow: hidden; 
+            transition: max-height 0.4s ease, padding 0.4s ease;
+        }
+
+        #objectTable.collapsed {
+            max-height: 56px;
+            padding-bottom: 0;
+            padding-top: 12px;
         }
         
+        .lib-header-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid rgba(250, 204, 21, 0.5);
+        }
+
         .lib-header-text {
             font-size: 12px;
             font-weight: 900;
             color: #ffffff;
             text-transform: uppercase;
             letter-spacing: 0.1em;
-            text-align: center;
-            width: 100%;
-            margin-bottom: 14px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid rgba(250, 204, 21, 0.5);
-            display: block;
-            word-wrap: break-word;
-            line-height: 1.4;
-            overflow: visible;
+            text-align: left;
+            flex-grow: 1;
+            text-shadow: 0 1px 2px black;
+        }
+
+        .collapse-btn {
+            background: none;
+            border: none;
+            color: #facc15;
+            cursor: pointer;
+            padding: 2px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease;
+        }
+
+        #objectTable.collapsed .collapse-btn {
+            transform: rotate(-180deg);
+        }
+
+        .lib-content-wrapper {
+            display: flex;
+            flex-direction: column;
+            transition: opacity 0.3s ease;
+        }
+
+        #objectTable.collapsed .lib-content-wrapper {
+            opacity: 0;
+            pointer-events: none;
         }
 
         .lib-grid {
@@ -679,6 +717,11 @@
 
                 <div class="flex bg-white/5 p-1 rounded-2xl gap-1 border border-white/10 shadow-inner">
                     <button id="brushBtn" class="tool-btn active" title="Кисть"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m12 19 7-7 3 3-7 7-3-3z"/><path d="m18 13-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg></button>
+                    <button id="smudgeBtn" class="tool-btn" title="Размытие/Градиент">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
+                        </svg>
+                    </button>
                     <button id="textBtn" class="tool-btn" title="Текст"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg></button>
                     <button id="waveBtn" class="tool-btn" title="Волна">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -730,19 +773,29 @@
 
         <div id="canvasWrapper" class="relative flex-grow flex items-center justify-center p-4 overflow-hidden bg-slate-950">
             <div id="objectTable">
-                <span class="lib-header-text">Библиотека объектов</span>
-                <div class="lib-grid" id="libGrid">
-                    <div class="lib-item-mini shadow-lg" onclick="insertObject('https://yt3.googleusercontent.com/E51f-Ku1QqArwy4dqPzwugfJRSQYK2cCEmSS1QFSJm9epWo3qIP7iRcHkjQJLPfhIoliAzHroA=s900-c-k-c0x00ffffff-no-rj')">
-                        <img src="https://yt3.googleusercontent.com/E51f-Ku1QqArwy4dqPzwugfJRSQYK2cCEmSS1QFSJm9epWo3qIP7iRcHkjQJLPfhIoliAzHroA=s900-c-k-c0x00ffffff-no-rj">
-                    </div>
-                    <div id="uploadObjectBtn" class="lib-item-mini border-dashed border-yellow-500/50 bg-yellow-500/10 text-yellow-500 shadow-lg group hover:bg-yellow-500/20">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    </div>
+                <div class="lib-header-container">
+                    <span class="lib-header-text">Библиотека</span>
+                    <button id="toggleLibBtn" class="collapse-btn" title="Свернуть/Развернуть">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 15l-6-6-6 6"/>
+                        </svg>
+                    </button>
                 </div>
+                
+                <div class="lib-content-wrapper" id="libContentWrapper">
+                    <div class="lib-grid" id="libGrid">
+                        <div class="lib-item-mini shadow-lg" onclick="insertObject('https://yt3.googleusercontent.com/E51f-Ku1QqArwy4dqPzwugfJRSQYK2cCEmSS1QFSJm9epWo3qIP7iRcHkjQJLPfhIoliAzHroA=s900-c-k-c0x00ffffff-no-rj')">
+                            <img src="https://yt3.googleusercontent.com/E51f-Ku1QqArwy4dqPzwugfJRSQYK2cCEmSS1QFSJm9epWo3qIP7iRcHkjQJLPfhIoliAzHroA=s900-c-k-c0x00ffffff-no-rj">
+                        </div>
+                        <div id="uploadObjectBtn" class="lib-item-mini border-dashed border-yellow-500/50 bg-yellow-500/10 text-yellow-500 shadow-lg group hover:bg-yellow-500/20">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        </div>
+                    </div>
 
-                <div class="mt-4 flex flex-col gap-1">
-                    <button id="clearBtn" class="action-button bg-red-500/20 hover:bg-red-500/40 !text-red-400 border-red-500/30">Очистить</button>
-                    <button id="saveBtn" class="action-button bg-yellow-500/20 hover:bg-yellow-500/40 !text-yellow-400 border-yellow-500/30">Сохранить</button>
+                    <div class="mt-4 flex flex-col gap-1">
+                        <button id="clearBtn" class="action-button bg-red-500/20 hover:bg-red-500/40 !text-red-400 border-red-500/30">Очистить</button>
+                        <button id="saveBtn" class="action-button bg-yellow-500/20 hover:bg-yellow-500/40 !text-yellow-400 border-yellow-500/30">Сохранить</button>
+                    </div>
                 </div>
             </div>
 
@@ -825,7 +878,10 @@
             finishObjectBtn: document.getElementById('finishObjectBtn'),
             lockSizeBtn: document.getElementById('lockSizeBtn'),
             rotate45Btn: document.getElementById('rotate45Btn'),
-            customAngleInput: document.getElementById('customAngleInput')
+            customAngleInput: document.getElementById('customAngleInput'),
+            smudgeBtn: document.getElementById('smudgeBtn'),
+            toggleLibBtn: document.getElementById('toggleLibBtn'),
+            objectTable: document.getElementById('objectTable')
         };
 
         const ctx = elements.canvas.getContext('2d', { willReadFrequently: true });
@@ -1074,6 +1130,8 @@
             } else if (currentTool === 'wave') {
                 const dx = pos.x - lastPos.x, dy = pos.y - lastPos.y;
                 applyLiquifyEffect(pos.x, pos.y, dx, dy, size);
+            } else if (currentTool === 'smudge') {
+                applySmudgeEffect(pos.x, pos.y, lastPos.x, lastPos.y, size, opacity);
             } else if (currentTool === 'brush' || currentTool === 'eraser') {
                 ctx.lineWidth = size; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
                 ctx.globalAlpha = opacity;
@@ -1204,6 +1262,32 @@
             ctx.putImageData(imageData, 0, 0);
         }
 
+        function applySmudgeEffect(x, y, prevX, prevY, size, strength) {
+            const radius = size / 2;
+            const areaSize = size;
+            const halfSize = radius;
+            const copyX = prevX - halfSize;
+            const copyY = prevY - halfSize;
+            
+            if (copyX < 0 || copyY < 0 || copyX + areaSize > elements.canvas.width || copyY + areaSize > elements.canvas.height) return;
+
+            const snapshot = ctx.getImageData(copyX, copyY, areaSize, areaSize);
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = areaSize;
+            tempCanvas.height = areaSize;
+            const tctx = tempCanvas.getContext('2d');
+            
+            tctx.beginPath();
+            tctx.arc(halfSize, halfSize, halfSize, 0, Math.PI * 2);
+            tctx.clip();
+            tctx.putImageData(snapshot, 0, 0);
+
+            ctx.save();
+            ctx.globalAlpha = strength * 0.5;
+            ctx.drawImage(tempCanvas, x - halfSize, y - halfSize);
+            ctx.restore();
+        }
+
         function applyLiquifyEffect(cx, cy, dx, dy, radius) {
             const r2 = radius * radius, areaSize = Math.ceil(radius * 2);
             let drawX = Math.max(0, Math.floor(cx - radius)), drawY = Math.max(0, Math.floor(cy - radius));
@@ -1298,6 +1382,11 @@
         elements.loadMusicBtn.onclick = () => { initAudio(); elements.musicInput.click(); };
         elements.musicInput.onchange = (e) => { if (e.target.files[0]) { elements.audio.src = URL.createObjectURL(e.target.files[0]); elements.audio.play(); } };
         
+        elements.toggleLibBtn.onclick = (e) => {
+            e.stopPropagation();
+            elements.objectTable.classList.toggle('collapsed');
+        };
+
         elements.container.onmouseenter = () => elements.brushCursor.style.display = 'block';
         elements.container.onmouseleave = () => elements.brushCursor.style.display = 'none';
         window.onresize = initCanvas;
